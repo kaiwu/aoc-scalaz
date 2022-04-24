@@ -1,2 +1,1 @@
-package aoc
-package 2016
+package aoc2016

@@ -1,2 +1,1 @@
-package aoc
-package 2020
+package aoc2020

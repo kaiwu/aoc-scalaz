@@ -1,2 +1,1 @@
-package aoc
-package 2018
+package aoc2018
