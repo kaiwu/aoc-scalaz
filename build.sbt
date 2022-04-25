@@ -10,5 +10,6 @@ console / initialCommands  := "import scalaz._, Scalaz._"
 
 addCompilerPlugin("org.scala-native" % "junit-plugin" % "0.4.3" cross CrossVersion.full)
 libraryDependencies += "org.scala-native" %%% "junit-runtime" % "0.4.3" % Test
+testOptions += Tests.Argument(TestFrameworks.JUnit, "-a", "-s", "-v")
 
 enablePlugins(ScalaNativePlugin)
