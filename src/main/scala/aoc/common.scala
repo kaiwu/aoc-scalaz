@@ -14,7 +14,7 @@ import Scalaz._
 // }
 
 type Span[T] = CStruct2[Ptr[T], CSize]
-type Array5[T] = CArray[T, Nat._5]
+type NArray[T, N <: Nat] = CArray[T, N]
 type PPtr[T] = Ptr[Ptr[T]]
 
 object Span {
@@ -37,6 +37,18 @@ object Span {
     p
   }
 }
+
+object NArray {
+  def apply[T : Tag, N <: Nat](args: T*)(using ptr: Ptr[T]): Ptr[T] = {
+    var index:CInt = 0
+    args.toSeq.foreach((x: T) => {
+      ptr(index) = x
+      index += 1
+    })
+    ptr
+  }
+}
+
 
 object PPtr {
   def make[T: Tag](p: Ptr[T]) : PPtr[T] = {

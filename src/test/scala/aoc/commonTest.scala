@@ -4,7 +4,6 @@ import org.junit.Assert._
 import org.junit.Test
 
 import scala.scalanative.unsafe._
-import scala.scalanative.unsafe.Tag
 import scala.scalanative.libc._
 import scala.scalanative.unsigned._
 
@@ -12,16 +11,16 @@ class commonTest {
   @Test def size(): Unit = {
     assertEquals(sizeof[Span[CInt]], 16.toULong)
     assertEquals(alignmentof[Span[CInt]], 8.toULong)
-    assertEquals(sizeof[Array5[CInt]], 20.toULong)
-    assertEquals(sizeof[Array5[CInt]] / sizeof[CInt], 5.toULong)
-    assertEquals(sizeof[Array5[Span[CInt]]], 80.toULong)
+    assertEquals(sizeof[NArray[CInt,Nat._5]], 20.toULong)
+    assertEquals(sizeof[NArray[CInt,Nat._5]] / sizeof[CInt], 5.toULong)
+    assertEquals(sizeof[NArray[Span[CInt],Nat._5]], 80.toULong)
     assertEquals(sizeof[PPtr[CInt]], 8.toULong)
   }
 
   @Test def number(): Unit = Zone { implicit z =>
     import common.deref
     import common.get_number
-    implicit def pptr[T] : PPtr[T] = alloc[Ptr[T]]()
+    implicit def allocator[T] : PPtr[T] = alloc[Ptr[T]]()
 
     val dp = stackalloc[CInt]()
     val xp1 = PPtr(c"123")
@@ -36,7 +35,7 @@ class commonTest {
   }
 
   @Test def span():Unit = Zone { implicit z =>
-    implicit def span[T] : Ptr[Span[T]] = alloc[Span[T]]()
+    implicit def allocator[T] : Ptr[Span[T]] = alloc[Span[T]]()
     val s1 = Span(c"abc")
     val s2 = Span(c"hello")
 
@@ -44,5 +43,14 @@ class commonTest {
     assertEquals(!s1._1, 'a')
     assertEquals(s2._2, 5.toULong)
     assertEquals(!s2._1, 'h')
+  }
+
+  @Test def array():Unit = Zone { implicit z =>
+    implicit def allocator[T, N <: Nat] : Ptr[T] = alloc[CArray[T, N]]().asInstanceOf[Ptr[T]]
+    val a1 = NArray[CInt, Nat._5](1,2,3,4,5)
+    for (i <- 0 to 4) assertEquals(a1(i), i + 1)
+
+    val a2 = NArray[CChar, Nat._3]('a','b','c')
+    for (i <- 0 to 2) assertEquals(a2(i), 'a' + i)
   }
 }
