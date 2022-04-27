@@ -7,34 +7,35 @@ import scala.annotation.tailrec
 import scalaz._
 import Scalaz._
 
-@extern
-object wyhash {
-  def make_secret(seed: CUnsignedLongLong, secret: Ptr[CUnsignedLongLong]): Unit = extern
-  def wyhash(key: Ptr[Byte], len: CSize, seed: ULong, secret: Ptr[CUnsignedLongLong]): CUnsignedLongLong = extern
-}
+// @extern
+// object wyhash {
+//   def make_secret(seed: CUnsignedLongLong, secret: Ptr[CUnsignedLongLong]): Unit = extern
+//   def wyhash(key: Ptr[Byte], len: CSize, seed: ULong, secret: Ptr[CUnsignedLongLong]): CUnsignedLongLong = extern
+// }
 
 type Span[T] = CStruct2[Ptr[T], CSize]
 type Array5[T] = CArray[T, Nat._5]
 type PPtr[T] = Ptr[Ptr[T]]
 
 object Span {
-  def apply[T : Tag](p: Ptr[T], s: CSize) : Ptr[Span[T]] =  {
+  def make[T : Tag](p: Ptr[T], s: CSize) : Ptr[Span[T]] =  {
     val span = stdlib.malloc(sizeof[Span[T]]).asInstanceOf[Ptr[Span[T]]]
     span._1 = p
     span._2 = s
     span
   }
-
-  def apply[T : Tag](p1: Ptr[T], p2: Ptr[T]) : Ptr[Span[T]] =
-    apply(p1, (p2 - p1).asInstanceOf[CSize])
-
-  def apply(p: CString): Ptr[Span[CChar]] =
-    apply(p, string.strlen(p))
+  def make[T : Tag](p1: Ptr[T], p2: Ptr[T]) : Ptr[Span[T]] = make(p1, (p2 - p1).asInstanceOf[CSize])
+  def make(p: CString): Ptr[Span[CChar]] = make(p, string.strlen(p))
 }
 
 object PPtr {
-  @inline def apply[T: Tag](p: Ptr[T]) : PPtr[T] = {
+  def make[T: Tag](p: Ptr[T]) : PPtr[T] = {
     val pptr = stdlib.malloc(sizeof[Ptr[T]]).asInstanceOf[PPtr[T]]
+    !pptr = p
+    pptr
+  }
+
+  def apply[T: Tag](p: Ptr[T])(using pptr: PPtr[T]): PPtr[T] = {
     !pptr = p
     pptr
   }
