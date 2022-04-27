@@ -18,7 +18,7 @@ class commonTest {
   }
 
   @Test def number(): Unit = {
-    import common.dereference
+    import common.deref
     import common.get_number
 
     val dp = stackalloc[CInt]()
@@ -26,7 +26,13 @@ class commonTest {
     !xp = c"123"
     !dp = 0
     get_number(xp, dp)
-    assertEquals(dereference(dp), 123)
-    assertEquals(dereference(dereference(xp)), 0)
- }
+    assertEquals(deref(dp), 123)
+    assertEquals(deref(deref(xp)), 0)
+
+    !xp = c"456"
+    !dp = 0
+    get_number(xp, dp)
+    assertEquals(deref(dp), 456)
+    assertEquals(deref(deref(xp)), 0)
+  }
 }

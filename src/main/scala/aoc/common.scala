@@ -18,7 +18,7 @@ type Array5[T] = CArray[T, Nat._5]
 type PPtr[T] = Ptr[Ptr[T]]
 
 object common {
-  def dereference[T: Tag](p: Ptr[T]): T = !p
+  def deref[T: Tag](p: Ptr[T]): T = !p
 
   @tailrec
   def fold[T: Tag, A](p: Ptr[T], a: A, f : (A, Ptr[T]) => A, g: Ptr[T] => CBool) : (A, Ptr[T]) = {
