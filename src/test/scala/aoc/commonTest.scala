@@ -8,7 +8,7 @@ import scala.scalanative.libc._
 import scala.scalanative.unsigned._
 
 class commonTest {
-  @Test def sizes(): Unit = {
+  @Test def size(): Unit = {
     assertEquals(sizeof[Span[CInt]], 16.toULong)
     assertEquals(alignmentof[Span[CInt]], 8.toULong)
     assertEquals(sizeof[Array5[CInt]], 20.toULong)
@@ -22,17 +22,24 @@ class commonTest {
     import common.get_number
 
     val dp = stackalloc[CInt]()
-    val xp = stackalloc[Ptr[CChar]]()
-    !xp = c"123"
-    !dp = 0
-    get_number(xp, dp)
+    val xp1 = PPtr(c"123")
+    get_number(xp1, dp)
     assertEquals(deref(dp), 123)
-    assertEquals(deref(deref(xp)), 0)
+    assertEquals(deref(deref(xp1)), 0)
 
-    !xp = c"456"
-    !dp = 0
-    get_number(xp, dp)
+    val xp2 = PPtr(c"456")
+    get_number(xp2, dp)
     assertEquals(deref(dp), 456)
-    assertEquals(deref(deref(xp)), 0)
+    assertEquals(deref(deref(xp2)), 0)
+  }
+
+  @Test def span():Unit = {
+    val s1 = Span(c"abc")
+    val s2 = Span(c"hello")
+
+    assertEquals(s1._2, 3.toULong)
+    assertEquals(!s1._1, 'a')
+    assertEquals(s2._2, 5.toULong)
+    assertEquals(!s2._1, 'h')
   }
 }

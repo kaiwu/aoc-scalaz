@@ -17,17 +17,40 @@ type Span[T] = CStruct2[Ptr[T], CSize]
 type Array5[T] = CArray[T, Nat._5]
 type PPtr[T] = Ptr[Ptr[T]]
 
+object Span {
+  def apply[T : Tag](p: Ptr[T], s: CSize) : Ptr[Span[T]] =  {
+    val span = stdlib.malloc(sizeof[Span[T]]).asInstanceOf[Ptr[Span[T]]]
+    span._1 = p
+    span._2 = s
+    span
+  }
+
+  def apply[T : Tag](p1: Ptr[T], p2: Ptr[T]) : Ptr[Span[T]] =
+    apply(p1, (p2 - p1).asInstanceOf[CSize])
+
+  def apply(p: CString): Ptr[Span[CChar]] =
+    apply(p, string.strlen(p))
+}
+
+object PPtr {
+  @inline def apply[T: Tag](p: Ptr[T]) : PPtr[T] = {
+    val pptr = stdlib.malloc(sizeof[Ptr[T]]).asInstanceOf[PPtr[T]]
+    !pptr = p
+    pptr
+  }
+}
+
 object common {
   def deref[T: Tag](p: Ptr[T]): T = !p
 
   @tailrec
-  def fold[T: Tag, A](p: Ptr[T], a: A, f : (A, Ptr[T]) => A, g: Ptr[T] => CBool) : (A, Ptr[T]) = {
+  def fold[T: Tag, A](p: Ptr[T], a: A, f : (A, Ptr[T]) => A, g: Ptr[T] => CBool) : (A, Ptr[T]) =
     if (g(p)) fold(p + 1, f(a, p), f, g)
     else (a, p)
-  }
 
   def get_number(pptr: PPtr[CChar], p: Ptr[CInt]): Unit = {
-    val f = (x: CInt, c: Ptr[CChar]) => x * 10 + !c - '0'
+    !p = 0
+    val f = (x: CInt, p: Ptr[CChar]) => x * 10 + !p - '0'
     val g = (p: Ptr[CChar]) => !p >= '0' && !p <= '9'
     val t = fold(!pptr, !p, f, g)
     !p = t._1
