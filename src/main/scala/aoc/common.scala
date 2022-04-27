@@ -26,6 +26,16 @@ object Span {
   }
   def make[T : Tag](p1: Ptr[T], p2: Ptr[T]) : Ptr[Span[T]] = make(p1, (p2 - p1).asInstanceOf[CSize])
   def make(p: CString): Ptr[Span[CChar]] = make(p, string.strlen(p))
+  def apply[T](p: Ptr[T], s: CSize)(using ptr: Ptr[Span[T]]): Ptr[Span[T]] = {
+      ptr._1 = p
+      ptr._2 = s
+      ptr
+  }
+  def apply(s: CString)(using p: Ptr[Span[CChar]]): Ptr[Span[CChar]] = {
+    p._1 = s
+    p._2 = string.strlen(s)
+    p
+  }
 }
 
 object PPtr {

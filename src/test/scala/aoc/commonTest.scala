@@ -21,8 +21,7 @@ class commonTest {
   @Test def number(): Unit = Zone { implicit z =>
     import common.deref
     import common.get_number
-
-    implicit def make[T] : PPtr[T] = alloc[Ptr[T]]()
+    implicit def pptr[T] : PPtr[T] = alloc[Ptr[T]]()
 
     val dp = stackalloc[CInt]()
     val xp1 = PPtr(c"123")
@@ -37,12 +36,13 @@ class commonTest {
   }
 
   @Test def span():Unit = Zone { implicit z =>
-    //val s1 = Span(alloc[Span[CChar]](), c"abc")
-    //val s2 = Span(alloc[Span[CChar]](), c"hello")
+    implicit def span[T] : Ptr[Span[T]] = alloc[Span[T]]()
+    val s1 = Span(c"abc")
+    val s2 = Span(c"hello")
 
-    //assertEquals(s1._2, 3.toULong)
-    //assertEquals(!s1._1, 'a')
-    //assertEquals(s2._2, 5.toULong)
-    //assertEquals(!s2._1, 'h')
+    assertEquals(s1._2, 3.toULong)
+    assertEquals(!s1._1, 'a')
+    assertEquals(s2._2, 5.toULong)
+    assertEquals(!s2._1, 'h')
   }
 }
