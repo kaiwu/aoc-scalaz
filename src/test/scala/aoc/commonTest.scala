@@ -1,5 +1,6 @@
 package aoc
 
+import scala.language.implicitConversions
 import org.junit.Assert._
 import org.junit.Test
 
@@ -39,10 +40,10 @@ class commonTest {
     val s1 = Span(c"abc")
     val s2 = Span(c"hello")
 
-    assertEquals(s1._2, 3.toULong)
-    assertEquals(!s1._1, 'a')
-    assertEquals(s2._2, 5.toULong)
-    assertEquals(!s2._1, 'h')
+    assertEquals(s1.at(0.toULong), 'a')
+    assertEquals(s1.length, 3.toULong)
+    assertEquals(s2.at(0.toULong), 'h')
+    assertEquals(s2.length, 5.toULong)
   }
 
   @Test def array(): Unit = Zone { implicit z =>
