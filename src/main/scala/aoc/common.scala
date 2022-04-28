@@ -39,11 +39,14 @@ object Span {
 }
 
 object NArray {
-  def apply[T: Tag, N <: Nat](args: T*)(using ptr: Ptr[CArray[T, N]]): Ptr[CArray[T, N]] = {
+  def apply[T: Tag, N <: Nat](args: T*)(using ptr: Ptr[CArray[T, N]], tag: Tag[CArray[T, N]]): Ptr[CArray[T, N]] = {
     var index: CSize = 0.toULong
+    val total: CSize = tag.size / sizeof[T]
     args.toSeq.foreach((x: T) => {
-      ptr.asInstanceOf[Ptr[T]](index) = x
-      index += 1.toULong
+      if (index < total) {
+        ptr.asInstanceOf[Ptr[T]](index) = x
+        index += 1.toULong
+      }
     })
     ptr
   }
