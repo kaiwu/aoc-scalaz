@@ -1,19 +1,20 @@
 package aoc
 
-import org.junit.Assert._
+import org.junit.Assert.*
 import org.junit.Test
 
-import scala.scalanative.unsafe._
-import scala.scalanative.libc._
-import scala.scalanative.unsigned._
+import scala.scalanative.unsafe.*
+import scala.scalanative.libc.*
+import scala.scalanative.unsafe.Tag.Digit2
+import scala.scalanative.unsigned.*
 
 class commonTest {
   @Test def size(): Unit = {
     assertEquals(sizeof[Span[CInt]], 16.toULong)
     assertEquals(alignmentof[Span[CInt]], 8.toULong)
-    assertEquals(sizeof[NArray[CInt,Nat._5]], 20.toULong)
-    assertEquals(sizeof[NArray[CInt,Nat._5]] / sizeof[CInt], 5.toULong)
-    assertEquals(sizeof[NArray[Span[CInt],Nat._5]], 80.toULong)
+    assertEquals(sizeof[CArray[CInt,Nat._5]], 20.toULong)
+    assertEquals(sizeof[CArray[CInt,Nat._5]] / sizeof[CInt], 5.toULong)
+    assertEquals(sizeof[CArray[Span[CInt],Nat._5]], 80.toULong)
     assertEquals(sizeof[PPtr[CInt]], 8.toULong)
   }
 
@@ -46,11 +47,13 @@ class commonTest {
   }
 
   @Test def array():Unit = Zone { implicit z =>
-    implicit def allocator[T, N <: Nat] : Ptr[T] = alloc[CArray[T, N]]().asInstanceOf[Ptr[T]]
-    val a1 = NArray[CInt, Nat._5](1,2,3,4,5)
-    for (i <- 0 to 4) assertEquals(a1(i), i + 1)
+    implicit def allocator[T : Tag, N <: Nat] : Ptr[CArray[T, N]] = alloc[CArray[T, N]]()
+    val a1 = NArray[CInt, Nat.Digit2[Nat._1, Nat._0]](1,2,3,4,5)
+    assertEquals(a1.length, 10)
+    for (i <- 0 until 5) assertEquals(i + 1, a1.asInstanceOf[Ptr[CInt]](i))
+    for (i <- 5 until 10) assertEquals(0, a1.asInstanceOf[Ptr[CInt]](i))
 
-    val a2 = NArray[CChar, Nat._3]('a','b','c')
-    for (i <- 0 to 2) assertEquals(a2(i), 'a' + i)
-  }
+    val a2 = NArray[CChar, Nat._4]('a','b','c','d')
+    assertEquals(a2.length, 4)
+    for (i <- 0 until 4) assertEquals('a' + i, a2.asInstanceOf[Ptr[CChar]](i))}
 }
