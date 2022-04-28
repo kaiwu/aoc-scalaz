@@ -42,6 +42,7 @@ object NArray {
   def apply[T: Tag, N <: Nat](args: T*)(using ptr: Ptr[CArray[T, N]], tag: Tag[CArray[T, N]]): Ptr[CArray[T, N]] = {
     var index: CSize = 0.toULong
     val total: CSize = tag.size / sizeof[T]
+    string.memset(ptr.asInstanceOf[Ptr[Byte]], 0x0, tag.size)
     args.toSeq.foreach((x: T) => {
       if (index < total) {
         ptr.asInstanceOf[Ptr[T]](index) = x
