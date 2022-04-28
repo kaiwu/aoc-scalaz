@@ -40,8 +40,17 @@ object Span {
 }
 
 case class SpanOps[T: Tag](p: Ptr[Span[T]]) {
+  val e: Ptr[T] = (!p)._1 + (!p)._2
+  @tailrec
+  final def loop(b: Ptr[T], f: Ptr[T] => CBool): Option[Ptr[T]] = {
+    if (b == e) None
+    else if (f(b)) Some(b)
+         else loop(b + 1, f)
+  }
   def length: CSize = (!p)._2
   def at(index: CSize): T = !((!p)._1 + index)
+  def find(f: Ptr[T] => CBool) : Option[Ptr[T]] = loop((!p)._1, f)
+  def foreach[U](f: Ptr[T] => U): Unit = ???
 }
 
 given[T: Tag]: Conversion[Ptr[Span[T]], SpanOps[T]] = new SpanOps[T](_)
