@@ -1,13 +1,16 @@
 package aoc
 package util
 
+import scala.language.implicitConversions
 import scala.Conversion
-import scala.scalanative.unsafe._
-import scala.scalanative.libc._
+import scala.annotation.{tailrec, targetName}
+import scalaz.*
+import Scalaz.*
+
+import scala.scalanative.libc.{stdlib, string}
+import scala.scalanative.posix.termios.NCCS
+import scala.scalanative.unsafe.{CBool, CChar, CSize, CString, CStruct2, Ptr, Tag, sizeof}
 import scala.scalanative.unsigned._
-import scala.annotation.tailrec
-import scalaz._
-import Scalaz._
 
 type Span[T] = CStruct2[Ptr[T], CSize]
 
@@ -25,6 +28,7 @@ object Span {
     (!ptr)._2 = s
     ptr
   }
+  def apply[T: Tag](p1: Ptr[T], p2: Ptr[T])(using ptr: Ptr[Span[T]]): Ptr[Span[T]] = apply(p1, (p2 - p1).asInstanceOf[CSize])
   def apply(s: CString)(using p: Ptr[Span[CChar]]): Ptr[Span[CChar]] = {
     (!p)._1 = s
     (!p)._2 = string.strlen(s)
@@ -33,20 +37,78 @@ object Span {
 }
 
 case class SpanOps[T: Tag](p: Ptr[Span[T]]) {
-  val e: Ptr[T] = (!p)._1 + (!p)._2
   @tailrec
   final def loop(b: Ptr[T], f: Ptr[T] => CBool): Option[Ptr[T]] = {
+    val e: Ptr[T] = (!p)._1 + (!p)._2
     if (b == e) None
     else if (f(b)) Some(b)
     else loop(b + 1, f)
   }
+
+  @tailrec
+  final def loop2(b1: Ptr[T], b2:Ptr[T], f: (Ptr[T], Ptr[T]) => CBool): Option[Ptr[T]] = {
+    val e: Ptr[T] = (!p)._1 + (!p)._2
+    if (b1 == e) None
+    else if (f(b1, b2)) Some(b1)
+    else loop2(b1 + 1, b2 + 1, f)
+  }
+
   def length: CSize = (!p)._2
+  def isEmpty: CBool = (!p)._1 == null || length == 0.toULong
   def at(index: CSize): T = !((!p)._1 + index)
   def find(f: Ptr[T] => CBool) : Option[Ptr[T]] = loop((!p)._1, f)
-  def foreach[U](f: Ptr[T] => U): Unit = loop((!p)._1, (x: Ptr[T]) => {
-    f(x)
-    false
-  })
+  def foreach[U](f: Ptr[T] => U): Unit = loop((!p)._1, x => { f(x) ; false })
+  def is_same(other: Ptr[Span[T]]): CBool = {
+    if (length == other.length) loop2((!p)._1 ,(!other)._1, (p1, p2) => {!p1 != !p2}).isEmpty
+    else false
+  }
+
+  def drop(s: CSize)(implicit ptr: Ptr[Span[T]]): Ptr[Span[T]] = {
+    if (s >= length) {
+      (!ptr)._1 = null
+      (!ptr)._2 = 0.toULong
+    }
+    else {
+      (!ptr)._1 = (!p)._1 + s
+      (!ptr)._2 = length - s
+    }
+    ptr
+  }
+
+  def dropRight(s: CSize)(implicit ptr: Ptr[Span[T]]): Ptr[Span[T]] = {
+    if (s >= length) {
+      (!ptr)._1 = null
+      (!ptr)._2 = 0.toULong
+    }
+    else {
+      (!ptr)._1 = (!p)._1
+      (!ptr)._2 = length - s
+    }
+    ptr
+  }
+
+  def take(s: CSize)(implicit ptr: Ptr[Span[T]]) : Ptr[Span[T]] =  {
+    if (s >= length) {
+      !ptr = !p
+    }
+    else {
+      (!ptr)._1 = (!p)._1
+      (!ptr)._2 = s
+    }
+    ptr
+  }
+
+  def takeWhile(f: Ptr[T] => CBool)(implicit ptr: Ptr[Span[T]]) : Ptr[Span[T]] =  {
+    (!ptr)._1 = (!p)._1
+    var index: CSize = 0.toULong
+    while (index < length && f((!p)._1 + index)) {
+      index += 1.toULong
+    }
+    (!ptr)._2 = index
+    ptr
+  }
+
+  def takeUntil(f: Ptr[T] => CBool)(implicit ptr: Ptr[Span[T]]) : Ptr[Span[T]] = takeWhile(x => !f(x))
 }
 
 given[T: Tag]: Conversion[Ptr[Span[T]], SpanOps[T]] = new SpanOps[T](_)

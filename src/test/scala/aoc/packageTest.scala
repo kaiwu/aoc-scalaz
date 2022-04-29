@@ -24,12 +24,12 @@ class packageTest {
     val dp = stackalloc[CInt]()
     val xp1 = PPtr(c"123")
     get_number(xp1, dp)
-    assertEquals(deref(dp), 123)
-    assertEquals(deref(deref(xp1)), 0)
+    assertEquals(!dp, 123)
+    assertEquals(!(!xp1), 0)
 
     val xp2 = PPtr(c"456")
     get_number(xp2, dp)
-    assertEquals(deref(dp), 456)
-    assertEquals(deref(deref(xp2)), 0)
+    assertEquals(!dp, 456)
+    assertEquals(!(!xp2), 0)
   }
 }

@@ -8,7 +8,6 @@ package object aoc {
   //   def make_secret(seed: CUnsignedLongLong, secret: Ptr[CUnsignedLongLong]): Unit = extern
   //   def wyhash(key: Ptr[Byte], len: CSize, seed: ULong, secret: Ptr[CUnsignedLongLong]): CUnsignedLongLong = extern
   // }
-  def deref[T: Tag](p: Ptr[T]) : T = !p
 
   @tailrec
   def fold[T: Tag, A](p: Ptr[T], a: A, f : (A, Ptr[T]) => A, g: Ptr[T] => CBool) : (A, Ptr[T]) =
