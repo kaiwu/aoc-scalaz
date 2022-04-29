@@ -36,5 +36,10 @@ class SpanTest {
     assertTrue(s3.takeWhile(x => !x != ' ').is_same(Span(c"hello")))
     assertTrue(s2.drop(5.toULong).isEmpty)
     assertTrue(s2.take(0.toULong).isEmpty)
+    assertTrue(s1.map(x => (!x - 32).asInstanceOf[CChar]).is_same(Span(c"ABC")))
+
+    val a1 = alloc[CInt](3)
+    for(i <- 0 until 3) !(a1 + i) = i
+    assertTrue(Span(a1, 3.toULong).map(x => ('A' + !x).asInstanceOf[CChar]).is_same(Span(c"ABC")))
   }
 }

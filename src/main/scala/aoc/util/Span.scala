@@ -7,16 +7,19 @@ import scala.annotation.{tailrec, targetName}
 import scalaz.*
 import Scalaz.*
 
-import scala.scalanative.libc.{stdlib, string}
+import scala.scalanative.libc.{stdio, stdlib, string}
 import scala.scalanative.posix.termios.NCCS
-import scala.scalanative.unsafe.{CBool, CChar, CSize, CString, CStruct2, Ptr, Tag, sizeof}
-import scala.scalanative.unsigned._
+import scala.scalanative.unsafe.{CBool, CChar, CInt, CSize, CString, CStruct2, Ptr, Tag, Zone, sizeof}
+import scala.scalanative.unsigned.*
+import scala.math.min
+import aoc.util.Allocator
 
 type Span[T] = CStruct2[Ptr[T], CSize]
 
 object Span {
   def make[T : Tag](p: Ptr[T], s: CSize) : Ptr[Span[T]] =  {
-    val span = stdlib.malloc(sizeof[Span[T]]).asInstanceOf[Ptr[Span[T]]]
+    val alloc = summon[Allocator[Span[T]]]
+    val span = alloc.alloc()
     (!span)._1 = p
     (!span)._2 = s
     span
@@ -44,7 +47,6 @@ case class SpanOps[T: Tag](p: Ptr[Span[T]]) {
     else if (f(b)) Some(b)
     else loop(b + 1, f)
   }
-
   @tailrec
   final def loop2(b1: Ptr[T], b2:Ptr[T], f: (Ptr[T], Ptr[T]) => CBool): Option[Ptr[T]] = {
     val e: Ptr[T] = (!p)._1 + (!p)._2
@@ -57,12 +59,11 @@ case class SpanOps[T: Tag](p: Ptr[Span[T]]) {
   def isEmpty: CBool = (!p)._1 == null || length == 0.toULong
   def at(index: CSize): T = !((!p)._1 + index)
   def find(f: Ptr[T] => CBool) : Option[Ptr[T]] = loop((!p)._1, f)
-  def foreach[U](f: Ptr[T] => U): Unit = loop((!p)._1, x => { f(x) ; false })
+  def foreach[U](f: Ptr[T] => U): Unit = loop((!p)._1, x => { f(x) ; false }).fold({})(_ => {})
   def is_same(other: Ptr[Span[T]]): CBool = {
     if (length == other.length) loop2((!p)._1 ,(!other)._1, (p1, p2) => {!p1 != !p2}).isEmpty
     else false
   }
-
   def drop(s: CSize)(implicit ptr: Ptr[Span[T]]): Ptr[Span[T]] = {
     if (s >= length) {
       (!ptr)._1 = null
@@ -74,7 +75,6 @@ case class SpanOps[T: Tag](p: Ptr[Span[T]]) {
     }
     ptr
   }
-
   def dropRight(s: CSize)(implicit ptr: Ptr[Span[T]]): Ptr[Span[T]] = {
     if (s >= length) {
       (!ptr)._1 = null
@@ -86,7 +86,6 @@ case class SpanOps[T: Tag](p: Ptr[Span[T]]) {
     }
     ptr
   }
-
   def take(s: CSize)(implicit ptr: Ptr[Span[T]]) : Ptr[Span[T]] =  {
     if (s >= length) {
       !ptr = !p
@@ -97,7 +96,6 @@ case class SpanOps[T: Tag](p: Ptr[Span[T]]) {
     }
     ptr
   }
-
   def takeWhile(f: Ptr[T] => CBool)(implicit ptr: Ptr[Span[T]]) : Ptr[Span[T]] =  {
     (!ptr)._1 = (!p)._1
     var index: CSize = 0.toULong
@@ -107,8 +105,21 @@ case class SpanOps[T: Tag](p: Ptr[Span[T]]) {
     (!ptr)._2 = index
     ptr
   }
-
   def takeUntil(f: Ptr[T] => CBool)(implicit ptr: Ptr[Span[T]]) : Ptr[Span[T]] = takeWhile(x => !f(x))
+  def map[T1: Tag](f: Ptr[T] => T1, ptr: Ptr[Span[T1]]): Ptr[Span[T1]] = {
+    val m = min(length.toLong, ptr.length.toLong)
+    var index = 0.toULong
+    while (index < m.toULong) {
+      !((!ptr)._1 + index) = f((!p)._1 + index)
+      index += 1.toULong
+    }
+    ptr
+  }
+  def map[T1: Tag](f: Ptr[T] => T1): Ptr[Span[T1]] = {
+    val alloc = summon[Allocator[T1]]
+    val ptr = alloc.alloc(length)
+    map(f, Span.make(ptr, length))
+  }
 }
 
 given[T: Tag]: Conversion[Ptr[Span[T]], SpanOps[T]] = new SpanOps[T](_)
