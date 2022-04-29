@@ -1,15 +1,14 @@
 package aoc
 package util
 
-import scala.language.implicitConversions
-import scala.Conversion
-import scala.annotation.{tailrec, targetName}
 import scalaz.*
 import Scalaz.*
 
+import scala.Conversion
+import scala.language.implicitConversions
+import scala.annotation.{tailrec, targetName}
 import scala.scalanative.libc.{stdio, stdlib, string}
-import scala.scalanative.posix.termios.NCCS
-import scala.scalanative.unsafe.{CBool, CChar, CInt, CSize, CString, CStruct2, Ptr, Tag, Zone, sizeof}
+import scala.scalanative.unsafe.{CArray, CBool, CChar, CInt, CSize, CString, CStruct2, Nat, Ptr, Tag, Zone, sizeof}
 import scala.scalanative.unsigned.*
 import scala.math.min
 import aoc.util.Allocator
@@ -37,6 +36,11 @@ object Span {
     (!p)._2 = string.strlen(s)
     p
   }
+  def apply[T: Tag, N <: Nat](a: CArray[T, N])(using p: Ptr[Span[T]], tag: Tag[CArray[T, N]]): Ptr[Span[T]] = {
+    (!p)._1 = a.at(0)
+    (!p)._2 = tag.size / sizeof[T]
+    p
+  }
 }
 
 case class SpanOps[T: Tag](p: Ptr[Span[T]]) {
@@ -58,6 +62,7 @@ case class SpanOps[T: Tag](p: Ptr[Span[T]]) {
   def length: CSize = (!p)._2
   def isEmpty: CBool = (!p)._1 == null || length == 0.toULong
   def at(index: CSize): T = !((!p)._1 + index)
+  def offset(index: CSize): Ptr[T] = (!p)._1 + index
   def find(f: Ptr[T] => CBool) : Option[Ptr[T]] = loop((!p)._1, f)
   def foreach[U](f: Ptr[T] => U): Unit = loop((!p)._1, x => { f(x) ; false }).fold({})(_ => {})
   def is_same(other: Ptr[Span[T]]): CBool = {
@@ -99,7 +104,7 @@ case class SpanOps[T: Tag](p: Ptr[Span[T]]) {
   def takeWhile(f: Ptr[T] => CBool)(implicit ptr: Ptr[Span[T]]) : Ptr[Span[T]] =  {
     (!ptr)._1 = (!p)._1
     var index: CSize = 0.toULong
-    while (index < length && f((!p)._1 + index)) {
+    while (index < length && f(offset(index))) {
       index += 1.toULong
     }
     (!ptr)._2 = index
@@ -110,7 +115,7 @@ case class SpanOps[T: Tag](p: Ptr[Span[T]]) {
     val m = min(length.toLong, ptr.length.toLong)
     var index = 0.toULong
     while (index < m.toULong) {
-      !((!ptr)._1 + index) = f((!p)._1 + index)
+      !ptr.offset(index) = f(offset(index))
       index += 1.toULong
     }
     ptr

@@ -1,6 +1,9 @@
 import aoc.util.PPtr
+
+import scala.Conversion
 import scala.annotation.tailrec
-import scala.scalanative.unsafe.{CBool, CChar, CInt, Ptr, Tag}
+import scala.language.implicitConversions
+import scala.scalanative.unsafe.{CBool, CChar, CInt, CSize, Ptr, Tag}
 
 package object aoc {
   // @extern
