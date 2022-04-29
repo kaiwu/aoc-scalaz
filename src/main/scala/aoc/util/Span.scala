@@ -16,16 +16,16 @@ import aoc.util.Allocator
 type Span[T] = CStruct2[Ptr[T], CSize]
 
 object Span {
-  def make[T : Tag](p: Ptr[T], s: CSize) : Ptr[Span[T]] =  {
+  def make[T: Tag](p: Ptr[T], s: CSize): Ptr[Span[T]] =  {
     val alloc = summon[Allocator[Span[T]]]
     val span = alloc.alloc()
     (!span)._1 = p
     (!span)._2 = s
     span
   }
-  def make[T : Tag](p1: Ptr[T], p2: Ptr[T]) : Ptr[Span[T]] = make(p1, (p2 - p1).asInstanceOf[CSize])
+  def make[T: Tag](p1: Ptr[T], p2: Ptr[T]): Ptr[Span[T]] = make(p1, (p2 - p1).asInstanceOf[CSize])
   def make(p: CString): Ptr[Span[CChar]] = make(p, string.strlen(p))
-  def apply[T : Tag](p: Ptr[T], s: CSize)(using ptr: Ptr[Span[T]]): Ptr[Span[T]] = {
+  def apply[T: Tag](p: Ptr[T], s: CSize)(using ptr: Ptr[Span[T]]): Ptr[Span[T]] = {
     (!ptr)._1 = p
     (!ptr)._2 = s
     ptr
@@ -63,7 +63,7 @@ case class SpanOps[T: Tag](p: Ptr[Span[T]]) {
   def isEmpty: CBool = (!p)._1 == null || length == 0.toULong
   def at(index: CSize): T = !((!p)._1 + index)
   def offset(index: CSize): Ptr[T] = (!p)._1 + index
-  def find(f: Ptr[T] => CBool) : Option[Ptr[T]] = loop((!p)._1, f)
+  def find(f: Ptr[T] => CBool): Option[Ptr[T]] = loop((!p)._1, f)
   def foreach[U](f: Ptr[T] => U): Unit = loop((!p)._1, x => { f(x) ; false }).fold({})(_ => {})
   def is_same(other: Ptr[Span[T]]): CBool = {
     if (length == other.length) loop2((!p)._1 ,(!other)._1, (p1, p2) => {!p1 != !p2}).isEmpty
@@ -91,7 +91,7 @@ case class SpanOps[T: Tag](p: Ptr[Span[T]]) {
     }
     ptr
   }
-  def take(s: CSize)(implicit ptr: Ptr[Span[T]]) : Ptr[Span[T]] =  {
+  def take(s: CSize)(implicit ptr: Ptr[Span[T]]): Ptr[Span[T]] =  {
     if (s >= length) {
       !ptr = !p
     }
@@ -101,7 +101,7 @@ case class SpanOps[T: Tag](p: Ptr[Span[T]]) {
     }
     ptr
   }
-  def takeWhile(f: Ptr[T] => CBool)(implicit ptr: Ptr[Span[T]]) : Ptr[Span[T]] =  {
+  def takeWhile(f: Ptr[T] => CBool)(implicit ptr: Ptr[Span[T]]): Ptr[Span[T]] =  {
     (!ptr)._1 = (!p)._1
     var index: CSize = 0.toULong
     while (index < length && f(offset(index))) {
@@ -110,7 +110,7 @@ case class SpanOps[T: Tag](p: Ptr[Span[T]]) {
     (!ptr)._2 = index
     ptr
   }
-  def takeUntil(f: Ptr[T] => CBool)(implicit ptr: Ptr[Span[T]]) : Ptr[Span[T]] = takeWhile(x => !f(x))
+  def takeUntil(f: Ptr[T] => CBool)(implicit ptr: Ptr[Span[T]]): Ptr[Span[T]] = takeWhile(x => !f(x))
   def map[T1: Tag](f: Ptr[T] => T1, ptr: Ptr[Span[T1]]): Ptr[Span[T1]] = {
     val m = min(length.toLong, ptr.length.toLong)
     var index = 0.toULong

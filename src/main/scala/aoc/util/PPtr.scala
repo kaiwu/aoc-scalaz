@@ -8,7 +8,7 @@ import aoc.util.Allocator
 type PPtr[T] = Ptr[Ptr[T]]
 
 object PPtr {
-  def make[T: Tag](p: Ptr[T]) : PPtr[T] = {
+  def make[T: Tag](p: Ptr[T]): PPtr[T] = {
     val alloc = summon[Allocator[Ptr[T]]]
     val pptr = alloc.alloc()
     !pptr = p

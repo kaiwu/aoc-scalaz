@@ -13,7 +13,7 @@ package object aoc {
   // }
 
   @tailrec
-  def fold[T: Tag, A](p: Ptr[T], a: A, f : (A, Ptr[T]) => A, g: Ptr[T] => CBool) : (A, Ptr[T]) =
+  def fold[T: Tag, A](p: Ptr[T], a: A, f: (A, Ptr[T]) => A, g: Ptr[T] => CBool): (A, Ptr[T]) =
     if (g(p)) fold(p + 1, f(a, p), f, g)
     else (a, p)
 
