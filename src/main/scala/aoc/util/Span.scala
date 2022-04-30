@@ -41,6 +41,10 @@ object Span {
     s._2 = tag.size / sizeof[T]
     s
   }
+
+  given span_functor_evidence: Functor[Span] with {
+    override def map[A, B](fa: Span[A])(f: A => B): Span[B] = fa.map(f)
+  }
 }
 
 case class SpanOps[T: Tag](sp: Span[T]) {
