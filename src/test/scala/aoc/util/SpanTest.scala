@@ -10,14 +10,14 @@ import scala.scalanative.unsigned._
 
 class SpanTest {
   @Test def span(): Unit = Zone { implicit z =>
-    implicit def allocator[T]: Ptr[Span[T]] = alloc[Span[T]]()
-    val s1                                  = Span(c"abc")
-    val s2                                  = Span(c"hello")
-    val s3                                  = Span(c"abchello").drop(3.toULong)
+    implicit def allocator[T]: Span[T] = alloc[Span[T]]()
+    val s1                             = Span(c"abc")
+    val s2                             = Span(c"hello")
+    val s3                             = Span(c"abchello").drop(3.toULong)
 
-    assertEquals(s1.at(0.toULong), 'a')
+    assertEquals(s1(0.toULong), 'a')
     assertEquals(s1.length, 3.toULong)
-    assertEquals(s2.at(0.toULong), 'h')
+    assertEquals(s2(0.toULong), 'h')
     assertEquals(s2.length, 5.toULong)
     assertFalse(s1.is_same(s2))
     assertFalse(s2 == s3)

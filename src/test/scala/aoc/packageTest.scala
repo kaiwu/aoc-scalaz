@@ -18,6 +18,19 @@ class packageTest {
     assertEquals(sizeof[PPtr[CInt]], 8.toULong)
   }
 
+  @Test def struct(): Unit = {
+    type S = CStruct2[CInt, CInt]
+
+    def method(s: S): S = { s._2 = s._2 + 1; s }
+    val x               = stackalloc[S]()
+    x._1 = 10
+    x._2 = 20
+    val r = method(x)
+
+    assertEquals(r._1, 10)
+    assertEquals(r._2, 21)
+  }
+
   @Test def number(): Unit = Zone { implicit z =>
     implicit def allocator[T]: PPtr[T] = alloc[Ptr[T]]()
 

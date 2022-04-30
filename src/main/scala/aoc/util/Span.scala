@@ -16,113 +16,115 @@ import aoc.util.Allocator
 type Span[T] = CStruct2[Ptr[T], CSize]
 
 object Span {
-  def make[T: Tag](p: Ptr[T], s: CSize): Ptr[Span[T]] = {
-    val alloc = summon[Allocator[Span[T]]]
-    val span  = alloc.alloc()
-    (!span)._1 = p
-    (!span)._2 = s
+  def make[T: Tag](p: Ptr[T], s: CSize): Span[T] = {
+    val alloc         = summon[Allocator[Span[T]]]
+    val span: Span[T] = alloc.alloc()
+    span._1 = p
+    span._2 = s
     span
   }
-  def make[T: Tag](p1: Ptr[T], p2: Ptr[T]): Ptr[Span[T]] = make(p1, (p2 - p1).asInstanceOf[CSize])
-  def make(p: CString): Ptr[Span[CChar]]                 = make(p, string.strlen(p))
-  def apply[T: Tag](p: Ptr[T], s: CSize)(using ptr: Ptr[Span[T]]): Ptr[Span[T]] = {
-    (!ptr)._1 = p
-    (!ptr)._2 = s
-    ptr
+  def make[T: Tag](p1: Ptr[T], p2: Ptr[T]): Span[T] = make(p1, (p2 - p1).asInstanceOf[CSize])
+  def make(p: CString): Span[CChar]                 = make(p, string.strlen(p))
+  def apply[T: Tag](p: Ptr[T], s: CSize)(using span: Span[T]): Span[T] = {
+    span._1 = p
+    span._2 = s
+    span
   }
-  def apply[T: Tag](p1: Ptr[T], p2: Ptr[T])(using ptr: Ptr[Span[T]]): Ptr[Span[T]] =
-    apply(p1, (p2 - p1).asInstanceOf[CSize])
-  def apply(s: CString)(using p: Ptr[Span[CChar]]): Ptr[Span[CChar]] = {
-    (!p)._1 = s
-    (!p)._2 = string.strlen(s)
-    p
+  def apply[T: Tag](p1: Ptr[T], p2: Ptr[T])(using span: Span[T]): Span[T] = apply(p1, (p2 - p1).asInstanceOf[CSize])
+  def apply(s: CString)(using span: Span[CChar]): Span[CChar] = {
+    span._1 = s
+    span._2 = string.strlen(s)
+    span
   }
-  def apply[T: Tag, N <: Nat](a: CArray[T, N])(using p: Ptr[Span[T]], tag: Tag[CArray[T, N]]): Ptr[Span[T]] = {
-    (!p)._1 = a.at(0)
-    (!p)._2 = tag.size / sizeof[T]
-    p
+  def apply[T: Tag, N <: Nat](a: CArray[T, N])(using s: Span[T], tag: Tag[CArray[T, N]]): Span[T] = {
+    s._1 = a.at(0)
+    s._2 = tag.size / sizeof[T]
+    s
   }
 }
 
-case class SpanOps[T: Tag](p: Ptr[Span[T]]) {
+case class SpanOps[T: Tag](sp: Span[T]) {
   @tailrec
   final def loop(b: Ptr[T], f: Ptr[T] => CBool): Option[Ptr[T]] = {
-    val e: Ptr[T] = (!p)._1 + (!p)._2
+    val e: Ptr[T] = sp._1 + sp._2
     if (b == e) None
     else if (f(b)) Some(b)
     else loop(b + 1, f)
   }
   @tailrec
   final def loop2(b1: Ptr[T], b2: Ptr[T], f: (Ptr[T], Ptr[T]) => CBool): Option[Ptr[T]] = {
-    val e: Ptr[T] = (!p)._1 + (!p)._2
+    val e: Ptr[T] = sp._1 + sp._2
     if (b1 == e) None
     else if (f(b1, b2)) Some(b1)
     else loop2(b1 + 1, b2 + 1, f)
   }
 
-  def length: CSize                            = (!p)._2
-  def isEmpty: CBool                           = (!p)._1 == null || length == 0.toULong
-  def at(index: CSize): T                      = !((!p)._1 + index)
-  def offset(index: CSize): Ptr[T]             = (!p)._1 + index
-  def find(f: Ptr[T] => CBool): Option[Ptr[T]] = loop((!p)._1, f)
-  def foreach[U](f: Ptr[T] => U): Unit         = loop((!p)._1, x => { f(x); false }).fold({})(_ => {})
-  def is_same(other: Ptr[Span[T]]): CBool = {
-    if (length == other.length) loop2((!p)._1, (!other)._1, (p1, p2) => { !p1 != !p2 }).isEmpty
+  def length: CSize                            = sp._2
+  def isEmpty: CBool                           = sp._1 == null || length == 0.toULong
+  def apply(index: CSize): T                   = !(sp._1 + index)
+  def update(index: CSize, value: T): Unit     = sp._1(index) = value
+  def offset(index: CSize): Ptr[T]             = sp._1 + index
+  def at(index: CSize): Ptr[T]                 = offset(index)
+  def find(f: Ptr[T] => CBool): Option[Ptr[T]] = loop(sp._1, f)
+  def foreach[U](f: Ptr[T] => U): Unit         = loop(sp._1, x => { f(x); false }).fold({})(_ => {})
+  def is_same(other: Span[T]): CBool = {
+    if (length == other.length) loop2(sp._1, other._1, (p1, p2) => { !p1 != !p2 }).isEmpty
     else false
   }
-  def drop(s: CSize)(implicit ptr: Ptr[Span[T]]): Ptr[Span[T]] = {
+  def drop(s: CSize)(implicit span: Span[T]): Span[T] = {
     if (s >= length) {
-      (!ptr)._1 = null
-      (!ptr)._2 = 0.toULong
+      span._1 = null
+      span._2 = 0.toULong
     } else {
-      (!ptr)._1 = (!p)._1 + s
-      (!ptr)._2 = length - s
+      span._1 = sp._1 + s
+      span._2 = length - s
     }
-    ptr
+    span
   }
-  def dropRight(s: CSize)(implicit ptr: Ptr[Span[T]]): Ptr[Span[T]] = {
+  def dropRight(s: CSize)(implicit span: Span[T]): Span[T] = {
     if (s >= length) {
-      (!ptr)._1 = null
-      (!ptr)._2 = 0.toULong
+      span._1 = null
+      span._2 = 0.toULong
     } else {
-      (!ptr)._1 = (!p)._1
-      (!ptr)._2 = length - s
+      span._1 = sp._1
+      span._2 = length - s
     }
-    ptr
+    span
   }
-  def take(s: CSize)(implicit ptr: Ptr[Span[T]]): Ptr[Span[T]] = {
+  def take(s: CSize)(implicit span: Span[T]): Span[T] = {
     if (s >= length) {
-      !ptr = !p
+      span._1 = sp._1
+      span._2 = sp._2
     } else {
-      (!ptr)._1 = (!p)._1
-      (!ptr)._2 = s
+      span._1 = sp._1
+      span._2 = s
     }
-    ptr
+    span
   }
-  def takeWhile(f: Ptr[T] => CBool)(implicit ptr: Ptr[Span[T]]): Ptr[Span[T]] = {
-    (!ptr)._1 = (!p)._1
+  def takeWhile(f: Ptr[T] => CBool)(implicit span: Span[T]): Span[T] = {
+    span._1 = sp._1
     var index: CSize = 0.toULong
     while (index < length && f(offset(index))) {
       index += 1.toULong
     }
-    (!ptr)._2 = index
-    ptr
+    span._2 = index
+    span
   }
-  def takeUntil(f: Ptr[T] => CBool)(implicit ptr: Ptr[Span[T]]): Ptr[Span[T]] = takeWhile(x => !f(x))
-  def map[T1: Tag](f: Ptr[T] => T1, ptr: Ptr[Span[T1]]): Ptr[Span[T1]] = {
-    val m     = min(length.toLong, ptr.length.toLong)
+  def takeUntil(f: Ptr[T] => CBool)(implicit span: Span[T]): Span[T] = takeWhile(x => !f(x))
+  def map[T1: Tag](f: Ptr[T] => T1, span: Span[T1]): Span[T1] = {
+    val m     = min(length.toLong, span.length.toLong)
     var index = 0.toULong
     while (index < m.toULong) {
-      !ptr.offset(index) = f(offset(index))
+      span(index) = f(offset(index))
       index += 1.toULong
     }
-    ptr
+    span
   }
-  def map[T1: Tag](f: Ptr[T] => T1): Ptr[Span[T1]] = {
+  def map[T1: Tag](f: Ptr[T] => T1): Span[T1] = {
     val alloc = summon[Allocator[T1]]
     val ptr   = alloc.alloc(length)
     map(f, Span.make(ptr, length))
   }
 }
 
-given [T: Tag]: Conversion[Ptr[Span[T]], SpanOps[T]] = new SpanOps[T](_)
+given [T: Tag]: Conversion[Span[T], SpanOps[T]] = new SpanOps[T](_)
