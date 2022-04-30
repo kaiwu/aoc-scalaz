@@ -22,8 +22,8 @@ class SpanTest {
     assertFalse(s1.is_same(s2))
     assertFalse(s2 == s3)
     assertTrue(s3.is_same(s2))
-    assertTrue(s1.find(p => !p == 'A').isEmpty)
-    assertFalse(s2.find(p => !p == 'l').isEmpty)
+    assertTrue(s1.find(_ == 'A').isEmpty)
+    assertFalse(s2.find(_ == 'l').isEmpty)
 
     var x = 0
     s1.foreach(_ => x += 1)
@@ -32,14 +32,17 @@ class SpanTest {
     assertEquals(x, 53)
 
     assertTrue(s2.take(3.toULong).is_same(Span(c"hel")))
-    assertTrue(s2.takeUntil(x => !x == 'o').is_same(Span(c"hell")))
-    assertTrue(s3.takeWhile(x => !x != ' ').is_same(Span(c"hello")))
+    assertTrue(s2.takeUntil(_ == 'o').is_same(Span(c"hell")))
+    assertTrue(s3.takeWhile(_ != ' ').is_same(Span(c"hello")))
     assertTrue(s2.drop(5.toULong).isEmpty)
     assertTrue(s2.take(0.toULong).isEmpty)
-    assertTrue(s1.map(x => (!x - 32).asInstanceOf[CChar]).is_same(Span(c"ABC")))
+    val f: CChar => CChar = x => (x - 32).asInstanceOf[CChar]
+    assertTrue(s1.map(f).is_same(Span(c"ABC")))
 
     val a1 = alloc[CInt](3)
     for (i <- 0 until 3) !(a1 + i) = i
-    assertTrue(Span(a1, 3.toULong).map(x => ('A' + !x).asInstanceOf[CChar]).is_same(Span(c"ABC")))
+    val s4               = Span(a1, 3.toULong)
+    val g: CInt => CChar = x => (x + 'A').asInstanceOf[CChar]
+    assertTrue(s4.map(g).is_same(Span(c"ABC")))
   }
 }
