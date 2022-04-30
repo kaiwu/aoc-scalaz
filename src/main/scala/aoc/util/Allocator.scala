@@ -11,9 +11,9 @@ trait Allocator[T: Tag] {
 }
 
 object Allocator {
-  given[T: Tag]: Allocator[T] = new {
-    override def alloc(n: CSize)(using tag: Tag[T]): Ptr[T] = stdlib.malloc(tag.size * n).asInstanceOf[Ptr[T]]
+  given [T: Tag]: Allocator[T] = new {
+    override def alloc(n: CSize)(using tag: Tag[T]): Ptr[T] =
+      stdlib.malloc(tag.size * n).asInstanceOf[Ptr[T]]
     override def free(p: Ptr[T]): Unit = stdlib.free(p.asInstanceOf[Ptr[Byte]])
   }
 }
-

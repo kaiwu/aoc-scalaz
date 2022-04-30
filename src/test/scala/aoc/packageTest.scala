@@ -21,7 +21,7 @@ class packageTest {
   @Test def number(): Unit = Zone { implicit z =>
     implicit def allocator[T]: PPtr[T] = alloc[Ptr[T]]()
 
-    val dp = stackalloc[CInt]()
+    val dp  = stackalloc[CInt]()
     val xp1 = PPtr(c"123")
     get_number(xp1, dp)
     assertEquals(!dp, 123)

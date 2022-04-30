@@ -11,9 +11,9 @@ import scala.scalanative.unsigned._
 class SpanTest {
   @Test def span(): Unit = Zone { implicit z =>
     implicit def allocator[T]: Ptr[Span[T]] = alloc[Span[T]]()
-    val s1 = Span(c"abc")
-    val s2 = Span(c"hello")
-    val s3 = Span(c"abchello").drop(3.toULong)
+    val s1                                  = Span(c"abc")
+    val s2                                  = Span(c"hello")
+    val s3                                  = Span(c"abchello").drop(3.toULong)
 
     assertEquals(s1.at(0.toULong), 'a')
     assertEquals(s1.length, 3.toULong)
@@ -39,7 +39,7 @@ class SpanTest {
     assertTrue(s1.map(x => (!x - 32).asInstanceOf[CChar]).is_same(Span(c"ABC")))
 
     val a1 = alloc[CInt](3)
-    for(i <- 0 until 3) !(a1 + i) = i
+    for (i <- 0 until 3) !(a1 + i) = i
     assertTrue(Span(a1, 3.toULong).map(x => ('A' + !x).asInstanceOf[CChar]).is_same(Span(c"ABC")))
   }
 }

@@ -10,7 +10,7 @@ type PPtr[T] = Ptr[Ptr[T]]
 object PPtr {
   def make[T: Tag](p: Ptr[T]): PPtr[T] = {
     val alloc = summon[Allocator[Ptr[T]]]
-    val pptr = alloc.alloc()
+    val pptr  = alloc.alloc()
     !pptr = p
     pptr
   }
@@ -20,4 +20,3 @@ object PPtr {
     pptr
   }
 }
-
