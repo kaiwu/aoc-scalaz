@@ -47,7 +47,7 @@ object Span {
   }
 }
 
-case class SpanOps[T: Tag](sp: Span[T]) {
+final case class SpanOps[T: Tag](sp: Span[T]) {
   @tailrec
   final def loop(b: Ptr[T], f: T => CBool): Option[Ptr[T]] = {
     val e: Ptr[T] = sp._1 + sp._2
