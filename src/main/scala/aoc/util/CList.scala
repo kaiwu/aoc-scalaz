@@ -2,8 +2,8 @@ package aoc.util
 
 import scala.Conversion
 import scala.language.implicitConversions
-import scala.scalanative.unsafe.CStruct2
-import scala.scalanative.unsafe.{Tag, CInt, CSize, CStruct1, CUnsignedLongLong, Ptr, extern, name, link}
+import scala.scalanative.libc._
+import scala.scalanative.unsafe._
 import scala.scalanative.unsigned.ULong
 
 type DoubleLink = CStruct2[Ptr[Byte], Ptr[Byte]]
@@ -12,16 +12,34 @@ type SingleHead = CStruct2[SingleLink, Ptr[SingleLink]]
 
 type CList[T] = CStruct2[DoubleLink, T]
 
-final case class DoubleLinkOps(d: DoubleLink) {
+final case class DoubleLinkOps(d: Ptr[DoubleLink]) {
   def prev: Ptr[DoubleLink] = d._1.asInstanceOf[Ptr[DoubleLink]]
   def next: Ptr[DoubleLink] = d._2.asInstanceOf[Ptr[DoubleLink]]
 }
-given Conversion[DoubleLink, DoubleLinkOps] = DoubleLinkOps(_)
-
-final case class CListOps[T: Tag](p: Ptr[CList[T]]) {
-  def link: Ptr[DoubleLink] = p.at1
-}
+given Conversion[Ptr[DoubleLink], DoubleLinkOps]       = DoubleLinkOps(_)
 given [T: Tag]: Conversion[Ptr[CList[T]], CListOps[T]] = new CListOps[T](_)
+
+final case class CListOps[T: Tag](h: Ptr[CList[T]]) {
+  def link: Ptr[DoubleLink]               = h.at1
+  def value: Ptr[T]                       = h.at2
+  def create(): Unit                      = clist.init_list_head(h.link)
+  def add_head(node: Ptr[CList[T]]): Unit = clist.list_add(node.link, h.link)
+  def add_tail(node: Ptr[CList[T]]): Unit = clist.list_add_tail(node.link, h.link)
+  def foreach[U](f: T => U): Unit = {
+    var n = h.link.next
+    while (n != h.link) {
+      f(!n.asInstanceOf[Ptr[CList[T]]].value)
+      n = n.next
+    }
+  }
+  def foreach_back[U](f: T => U): Unit = {
+    var p = h.link.prev
+    while (p != h.link) {
+      f(!p.asInstanceOf[Ptr[CList[T]]].value)
+      p = p.prev
+    }
+  }
+}
 
 @extern
 object clist {

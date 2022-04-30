@@ -63,8 +63,7 @@ void list_add(struct list_head *node, struct list_head *head)
  * Insert a new entry before the specified head.
  * This is useful for implementing queues.
  */
-void list_add_tail(struct list_head *node,
-								 struct list_head *head)
+void list_add_tail(struct list_head *node, struct list_head *head)
 {
 	__list_add(node, head->prev, head);
 }
