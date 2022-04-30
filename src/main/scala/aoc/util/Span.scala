@@ -62,6 +62,7 @@ case class SpanOps[T: Tag](sp: Span[T]) {
   def length: CSize                            = sp._2
   def isEmpty: CBool                           = sp._1 == null || length == 0.toULong
   def apply(index: CSize): T                   = !(sp._1 + index)
+  def apply(index: CInt): T                    = !(sp._1 + index)
   def update(index: CSize, value: T): Unit     = sp._1(index) = value
   def offset(index: CSize): Ptr[T]             = sp._1 + index
   def at(index: CSize): Ptr[T]                 = offset(index)

@@ -15,9 +15,9 @@ class SpanTest {
     val s2                             = Span(c"hello")
     val s3                             = Span(c"abchello").drop(3.toULong)
 
-    assertEquals(s1(0.toULong), 'a')
+    assertEquals(s1(0), 'a')
     assertEquals(s1.length, 3.toULong)
-    assertEquals(s2(0.toULong), 'h')
+    assertEquals(s2(0), 'h')
     assertEquals(s2.length, 5.toULong)
     assertFalse(s1.is_same(s2))
     assertFalse(s2 == s3)

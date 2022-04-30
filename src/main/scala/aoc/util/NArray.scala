@@ -11,16 +11,16 @@ import Scalaz._
 type NArray[T, N <: Nat] = CArray[T, N]
 
 object NArray {
-  def apply[T: Tag, N <: Nat](args: T*)(using ptr: Ptr[CArray[T, N]], tag: Tag[CArray[T, N]]): Ptr[CArray[T, N]] = {
-    var index: CSize = 0.toULong
-    val total: CSize = tag.size / sizeof[T]
-    string.memset(ptr.asInstanceOf[Ptr[Byte]], 0x0, tag.size)
+  def apply[T: Tag, N <: Nat](args: T*)(using a: Ptr[CArray[T, N]], tag: Tag[CArray[T, N]]): CArray[T, N] = {
+    var index: CInt = 0
+    val total: CInt = (tag.size / sizeof[T]).toInt
+    string.memset(a.at(0).asInstanceOf[Ptr[Byte]], 0x0, tag.size)
     args.toSeq.foreach((x: T) => {
       if (index < total) {
-        ptr.asInstanceOf[Ptr[T]](index) = x
-        index += 1.toULong
+        a(index) = x
+        index += 1
       }
     })
-    ptr
+    a
   }
 }
