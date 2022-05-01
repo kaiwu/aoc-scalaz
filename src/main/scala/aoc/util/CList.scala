@@ -4,7 +4,7 @@ import scala.Conversion
 import scala.language.implicitConversions
 import scala.scalanative.libc._
 import scala.scalanative.unsafe._
-import scala.scalanative.unsigned.ULong
+import scala.scalanative.unsigned._
 import aoc.util.PPtr
 
 type DoubleLink = CStruct2[PPtr[Byte], PPtr[Byte]]
@@ -23,6 +23,7 @@ final case class CListOps[T: Tag](h: Ptr[CList[T]]) {
   def link: Ptr[DoubleLink] = h.at1
   def value: Ptr[T]         = h.at2
   def valid: CBool          = link.next != null && link.prev != null
+  def empty: CBool          = valid && link.next == link
   def create(): Unit        = { h.link.prev = h.link; h.link.next = h.link }
   def add(node: Ptr[DoubleLink], prev: Ptr[DoubleLink], next: Ptr[DoubleLink]): Unit = {
     prev.next = node
@@ -38,6 +39,10 @@ final case class CListOps[T: Tag](h: Ptr[CList[T]]) {
     if (!node.valid) node.create()
     add(node.link, h.link.prev, h.link)
   }
+  def del(node: Ptr[CList[T]]): Unit = {
+    node.link.prev.next = node.link.next
+    node.link.next.prev = node.link.prev
+  }
 
   def foreach[U](f: T => U): Unit = {
     var n = h.link.next
@@ -52,5 +57,10 @@ final case class CListOps[T: Tag](h: Ptr[CList[T]]) {
       f(!p.asInstanceOf[Ptr[CList[T]]].value)
       p = p.prev
     }
+  }
+  def size: CSize = {
+    var s: CSize = 0.toULong
+    foreach(_ => s += 1.toULong)
+    s
   }
 }
