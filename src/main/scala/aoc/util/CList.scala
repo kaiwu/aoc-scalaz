@@ -2,10 +2,10 @@ package aoc.util
 
 import scala.Conversion
 import scala.language.implicitConversions
-import scala.scalanative.libc._
-import scala.scalanative.unsafe._
-import scala.scalanative.unsigned._
-import scala.annotation.targetName
+import scala.scalanative.libc.*
+import scala.scalanative.unsafe.*
+import scala.scalanative.unsigned.*
+import scala.annotation.{showAsInfix, targetName}
 import aoc.util.PPtr
 import aoc.util.Allocator
 
@@ -13,27 +13,23 @@ type DoubleLink = CStruct2[PPtr[Byte], PPtr[Byte]]
 type CList[T]   = CStruct2[DoubleLink, T]
 
 object CList {
-  implicit def nil(implicit p: Ptr[DoubleLink]): Ptr[DoubleLink] = {
-    p.next = p
-    p.prev = p
-    p
-  }
-  def make[T: Tag](e: T): Ptr[CList[T]] = {
+  implicit def head[T: Tag]: Ptr[CList[T]] = {
     val alloc = summon[Allocator[CList[T]]]
-    val p = alloc.alloc()
-    !p.value = e
-    p.create()
-    p
+    val n     = alloc.alloc()
+    n.create()
+    n
   }
-  def apply[T: Tag](e: T)(implicit p: Ptr[CList[T]]): Ptr[CList[T]] = {
-    !p.value = e
+  def make[T: Tag](e: T)(implicit n: Ptr[CList[T]]): Ptr[CList[T]] = {
+    val alloc = summon[Allocator[CList[T]]]
+    val p     = alloc.alloc()
     p.create()
-    p
+    !p.value = e
+    n.link.con_tail(p.link)
+    n
   }
-  def apply[T: Tag](ls: T*): Ptr[CList[T]] = ???
-  @targetName("::")
-  def ::[T: Tag](l1: Ptr[CList[T]], l2: Ptr[CList[T]]): Ptr[CList[T]] = {
-    l1.add_tail(l2)
+  def apply[T: Tag](ls: T*)(implicit n: Ptr[CList[T]]): Ptr[CList[T]] = {
+    ls.toSeq.foreach(x => make(x))
+    n
   }
 }
 
@@ -44,19 +40,35 @@ final case class DoubleLinkOps(d: Ptr[DoubleLink]) {
   def next_=(p: Ptr[DoubleLink]): Unit = !d.at2.asInstanceOf[PPtr[DoubleLink]] = p
 
   // d o d->next
-  def con_head(o: Ptr[DoubleLink]) : Ptr[DoubleLink] = {
+  def con_head(o: Ptr[DoubleLink]): Ptr[DoubleLink] = {
     d.next.prev = o
     o.next = d.next
     d.next = o
     o.prev = d
     d
   }
+  // d h t d->next
+  def con_head(h: Ptr[DoubleLink], t: Ptr[DoubleLink]): Ptr[DoubleLink] = {
+    d.next.prev = t
+    t.next = d.next
+    d.next = h
+    h.prev = d
+    d
+  }
   // d->prev o d
-  def con_tail(o: Ptr[DoubleLink]) : Ptr[DoubleLink] = {
+  def con_tail(o: Ptr[DoubleLink]): Ptr[DoubleLink] = {
     d.prev.next = o
     o.prev = d.prev
     o.next = d
     d.prev = o
+    d
+  }
+  // d->prev h t d
+  def con_tail(h: Ptr[DoubleLink], t: Ptr[DoubleLink]): Ptr[DoubleLink] = {
+    d.prev.next = h
+    h.prev = d.prev
+    t.next = d
+    d.prev = t
     d
   }
 }
@@ -69,22 +81,6 @@ final case class CListOps[T: Tag](h: Ptr[CList[T]]) {
   def valid: CBool          = link.next != null && link.prev != null
   def empty: CBool          = valid && link.next == link
   def create(): Unit        = { h.link.prev = h.link; h.link.next = h.link }
-  def add(node: Ptr[DoubleLink], prev: Ptr[DoubleLink], next: Ptr[DoubleLink]): Unit = {
-    prev.next = node
-    node.prev = prev
-    node.next = next
-    next.prev = node
-  }
-  def add_head(node: Ptr[CList[T]]): Ptr[CList[T]] = {
-    if (!node.valid) node.create()
-    add(node.link, h.link, h.link.next)
-    h
-  }
-  def add_tail(node: Ptr[CList[T]]): Ptr[CList[T]] = {
-    if (!node.valid) node.create()
-    add(node.link, h.link.prev, h.link)
-    h
-  }
   def del(node: Ptr[CList[T]]): Ptr[CList[T]] = {
     node.link.prev.next = node.link.next
     node.link.next.prev = node.link.prev
@@ -109,5 +105,12 @@ final case class CListOps[T: Tag](h: Ptr[CList[T]]) {
     var s: CSize = 0.toULong
     foreach(_ => s += 1.toULong)
     s
+  }
+  @showAsInfix
+  @targetName("::")
+  def ::(l: Ptr[CList[T]]): Ptr[CList[T]] = {
+    h.link.con_head(l.link.next, l.link.prev)
+    l.create()
+    h
   }
 }
