@@ -1,5 +1,4 @@
 package aoc.util
-import aoc.util.clist.*
 import org.junit.Assert.{assertEquals, assertTrue}
 import org.junit.Test
 
@@ -18,5 +17,8 @@ class CListTest {
       head.add_tail(a)
     }
     head.foreach(stdio.printf(c"%d -> ", _))
+    stdio.printf(c"\n")
+    head.foreach_back(stdio.printf(c"%d -> ", _))
+    stdio.printf(c"\n")
   }
 }
