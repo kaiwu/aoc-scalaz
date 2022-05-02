@@ -62,6 +62,11 @@ final case class SpanOps[T: Tag](sp: Span[T]) {
     else if (f(!b1, !b2)) Some(b1)
     else loop2(b1 + 1, b2 + 1, f)
   }
+  @tailrec
+  final def loop3[T1](s: CSize, t: T1, f: (T, T1) => T1): T1 = {
+    if (s < sp.length) loop3(s + 1.toULong, f(apply(s), t), f)
+    else t
+  }
 
   def length: CSize                        = sp._2
   def isEmpty: CBool                       = sp._1 == null || length == 0.toULong
@@ -130,6 +135,7 @@ final case class SpanOps[T: Tag](sp: Span[T]) {
     val ptr   = alloc.alloc(length)
     map(f, Span.make(ptr, length))
   }
+  def fold[T1](t: T1, f: (T, T1) => T1): T1 = loop3(0.toULong, t, f)
 }
 
 given [T: Tag]: Conversion[Span[T], SpanOps[T]] = new SpanOps[T](_)
