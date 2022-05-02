@@ -5,9 +5,10 @@ import scala.language.implicitConversions
 import scala.scalanative.libc.*
 import scala.scalanative.unsafe.*
 import scala.scalanative.unsigned.*
-import scala.annotation.{showAsInfix, targetName}
+import scala.annotation.{showAsInfix, tailrec, targetName}
 import aoc.util.PPtr
 import aoc.util.Allocator
+import scalaz.Functor
 
 type DoubleLink = CStruct2[PPtr[Byte], PPtr[Byte]]
 type CList[T]   = CStruct2[DoubleLink, T]
@@ -16,13 +17,13 @@ object CList {
   implicit def head[T: Tag]: Ptr[CList[T]] = {
     val alloc = summon[Allocator[CList[T]]]
     val n     = alloc.alloc()
-    n.create()
+    n.reset()
     n
   }
   def make[T: Tag](e: T)(implicit n: Ptr[CList[T]]): Ptr[CList[T]] = {
     val alloc = summon[Allocator[CList[T]]]
     val p     = alloc.alloc()
-    p.create()
+    p.reset()
     !p.value = e
     n.link.con_tail(p.link)
     n
@@ -80,11 +81,17 @@ final case class CListOps[T: Tag](h: Ptr[CList[T]]) {
   def value: Ptr[T]         = h.at2
   def valid: CBool          = link.next != null && link.prev != null
   def empty: CBool          = valid && link.next == link
-  def create(): Unit        = { h.link.prev = h.link; h.link.next = h.link }
+  def reset(): Unit         = { h.link.prev = h.link; h.link.next = h.link }
   def del(node: Ptr[CList[T]]): Ptr[CList[T]] = {
     node.link.prev.next = node.link.next
     node.link.next.prev = node.link.prev
     h
+  }
+
+  @tailrec
+  def loop[T1](p: Ptr[CList[T]], x: T1, f: (T, T1) => T1): T1 = {
+    if (p.link.next == h.link) f(!p.value, x)
+    else loop(p.link.next.next.asInstanceOf[Ptr[CList[T]]], f(!p.value, x), f)
   }
 
   def foreach[U](f: T => U): Unit = {
@@ -110,7 +117,16 @@ final case class CListOps[T: Tag](h: Ptr[CList[T]]) {
   @targetName("::")
   def ::(l: Ptr[CList[T]]): Ptr[CList[T]] = {
     h.link.con_head(l.link.next, l.link.prev)
-    l.create()
+    l.reset()
     h
   }
+
+  def map[T1: Tag](f: T => T1): Ptr[CList[T1]] = {
+    import CList.head
+    import CList.make
+    val head = summon[Ptr[CList[T1]]]
+    foreach(x => make(f(x))(summon[Tag[T1]], head))
+    head
+  }
+  def fold[T1](t1: T1, f: (T, T1) => T1): T1 = loop(h, t1, f)
 }
