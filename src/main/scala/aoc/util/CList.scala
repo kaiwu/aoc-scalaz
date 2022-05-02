@@ -90,8 +90,9 @@ final case class CListOps[T: Tag](h: Ptr[CList[T]]) {
 
   @tailrec
   def loop[T1](p: Ptr[CList[T]], x: T1, f: (T, T1) => T1): T1 = {
-    if (p.link.next == h.link) f(!p.value, x)
-    else loop(p.link.next.next.asInstanceOf[Ptr[CList[T]]], f(!p.value, x), f)
+    val n = p.link.next.asInstanceOf[Ptr[CList[T]]]
+    if (n.link.next == h.link) f(!n.value, x)
+    else loop(n, f(!n.value, x), f)
   }
 
   def foreach[U](f: T => U): Unit = {
