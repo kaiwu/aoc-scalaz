@@ -1,5 +1,8 @@
 package aoc.util
 
+import scalaz._
+import Scalaz._
+
 import scala.Conversion
 import scala.language.implicitConversions
 import scala.scalanative.libc.*
@@ -8,7 +11,6 @@ import scala.scalanative.unsigned.*
 import scala.annotation.{showAsInfix, tailrec, targetName}
 import aoc.util.PPtr
 import aoc.util.Allocator
-import scalaz.Functor
 
 type DoubleLink = CStruct2[PPtr[Byte], PPtr[Byte]]
 type CList[T]   = CStruct2[DoubleLink, T]
@@ -33,9 +35,9 @@ object CList {
     n
   }
 
-  // given clist_functor_instance: Functor[CList] with {
-  //   override def map[A, B](fa: CList[A])(f: A => B): CList[B] = ???
-  // }
+  given clist_functor_instance: Functor[CList] with {
+    override def map[A, B](fa: CList[A])(f: A => B): CList[B] = fa.map(f)
+  }
 }
 
 final case class DoubleLinkOps(d: Ptr[DoubleLink]) {
