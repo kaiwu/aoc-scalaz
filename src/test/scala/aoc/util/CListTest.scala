@@ -6,7 +6,6 @@ import scala.language.implicitConversions
 import scala.scalanative.unsafe.*
 import scala.scalanative.unsigned.*
 import scala.scalanative.libc.*
-import aoc.util.CList.head
 
 class CListTest {
   @Test def create(): Unit = Zone { implicit z =>
@@ -18,7 +17,7 @@ class CListTest {
         (if (ms._1 > b) ms._1 else b, if (ms._2 > b) b else ms._2, ms._3 + b, ms._4 + 1)
       }
     )
-    // l.map('A' + _).foreach(stdio.printf(c"%c", _))
+    l.map('A' + _).foreach(stdio.printf(c"%c", _))
     assertEquals(max, 4)
     assertEquals(min, 0)
     assertEquals(total, 10)

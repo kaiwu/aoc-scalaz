@@ -30,8 +30,9 @@ object CList {
     n.link.con_tail((!p).link)
     n
   }
-  def apply[T: Tag](ls: T*)(implicit n: CList[T]): CList[T] = {
-    ls.toSeq.foreach(x => make(x))
+  def apply[T: Tag](ls: T*): CList[T] = {
+    val n = head[T]
+    ls.toSeq.foreach(x => make(x)(summon[Tag[T]], n))
     n
   }
 

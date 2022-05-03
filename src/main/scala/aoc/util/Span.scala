@@ -41,6 +41,17 @@ object Span {
     s._2 = tag.size / sizeof[T]
     s
   }
+  def apply[T: Tag](xs: T*): Span[T] = {
+    val alloc       = summon[Allocator[T]]
+    val size: CSize = xs.size.toULong
+    val p           = alloc.alloc(size)
+    var index       = 0.toULong
+    xs.toSeq.foreach(x => {
+      !(p + index) = x
+      index += 1.toULong
+    })
+    make(p, size)
+  }
 
   given span_functor_evidence: Functor[Span] with {
     override def map[A, B](fa: Span[A])(f: A => B): Span[B] = fa.map(f)

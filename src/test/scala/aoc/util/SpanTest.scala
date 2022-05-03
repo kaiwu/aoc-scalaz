@@ -39,9 +39,7 @@ class SpanTest {
     val f: CChar => CChar = x => (x - 32).asInstanceOf[CChar]
     assertTrue(s1.map(f).is_same(Span(c"ABC")))
 
-    val a1 = alloc[CInt](4)
-    for (i <- 0 until 4) !(a1 + i) = i
-    val s4               = Span(a1, 4.toULong)
+    val s4               = Span(0, 1, 2, 3)
     val g: CInt => CChar = x => (x + 'A').asInstanceOf[CChar]
     assertTrue(s4.map(g).is_same(Span(c"ABCD")))
     assertEquals(s4.fold(0, _ + _), 6)
