@@ -1,14 +1,14 @@
 package aoc
 
-import aoc.util.{PPtr, Span}
+import aoc.util.{PPtr, Span, SpanOps}
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
 import scala.Conversion
 import scala.language.implicitConversions
-import scala.scalanative.unsafe._
-import scala.scalanative.libc._
-import scala.scalanative.unsigned._
+import scala.scalanative.unsafe.*
+import scala.scalanative.libc.*
+import scala.scalanative.unsigned.*
 
 class packageTest {
   @Test def size(): Unit = {
@@ -34,8 +34,9 @@ class packageTest {
   }
 
   @Test def file(): Unit = {
-    val f = load_file(c"/tmp/test")
-    // (stdio.printf(c"%c", _))
+    val f  = load_file(c"C:\\Tmp\\CMakeCache.txt")
+    val sp = SpanOps(f)
+    stdio.printf(c"%zu\n", sp.length)
   }
 
   @Test def number(): Unit = Zone { implicit z =>
