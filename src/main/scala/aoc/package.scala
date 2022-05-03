@@ -24,6 +24,22 @@ package object aoc {
     !pptr = t._2
   }
 
+  def foreach_line[U](file: Span[Byte], f: Span[Byte] => U, c: CChar = '\n'): Unit = Zone { implicit z =>
+    implicit def allocator[T]: Span[T] = alloc[Span[T]]()
+    val end                            = file._1 + file._2
+    @tailrec
+    def loop(p1: Ptr[CChar], p2: Ptr[CChar]): Unit = {
+      if (p2 == end) f(Span(p1, p2))
+      else if (!p2 == c) {
+        f(Span(p1, p2))
+        loop(p2 + 1, p2 + 1)
+      } else {
+        loop(p1, p2 + 1)
+      }
+    }
+    loop(file._1, file._1)
+  }
+
   def load_file(path: CString): Span[Byte] = {
     val file = stdio.fopen(path, c"r")
     @tailrec

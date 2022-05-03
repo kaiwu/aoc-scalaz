@@ -30,7 +30,7 @@ object Span {
     span._2 = s
     span
   }
-  def apply[T: Tag](p1: Ptr[T], p2: Ptr[T])(using span: Span[T]): Span[T] = apply(p1, (p2 - p1).asInstanceOf[CSize])
+  def apply[T: Tag](p1: Ptr[T], p2: Ptr[T])(using span: Span[T]): Span[T] = apply(p1, (p2 - p1).toULong)
   def apply(s: CString)(using span: Span[CChar]): Span[CChar] = {
     span._1 = s
     span._2 = string.strlen(s)

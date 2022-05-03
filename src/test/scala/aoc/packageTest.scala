@@ -34,9 +34,8 @@ class packageTest {
   }
 
   @Test def file(): Unit = {
-    val f  = load_file(c"C:\\Tmp\\CMakeCache.txt")
-    val sp = SpanOps(f)
-    stdio.printf(c"%zu\n", sp.length)
+    val f = load_file(c"C:\\Tmp\\CMakeCache.txt")
+    foreach_line(f, line => stdio.printf(c"%zu\n", line._2))
   }
 
   @Test def number(): Unit = Zone { implicit z =>
