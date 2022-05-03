@@ -29,12 +29,12 @@ package object aoc {
     val end                            = file._1 + file._2
     @tailrec
     def loop(p1: Ptr[CChar], p2: Ptr[CChar]): Unit = {
-      if (p2 == end) f(Span(p1, p2))
-      else if (!p2 == c) {
-        f(Span(p1, p2))
-        loop(p2 + 1, p2 + 1)
-      } else {
-        loop(p1, p2 + 1)
+      p2 match {
+        case x if x == end => f(Span(p1, p2))
+        case x if !x == c =>
+          f(Span(p1, p2))
+          loop(p2 + 1, p2 + 1)
+        case _ => loop(p1, p2 + 1)
       }
     }
     loop(file._1, file._1)
