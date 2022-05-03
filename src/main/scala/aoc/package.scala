@@ -52,7 +52,7 @@ package object aoc {
 
     if (file == null) Span.make(null: Ptr[Byte], 0.toULong)
     else {
-      var size = file_size(file, 0.toULong)
+      val size = file_size(file, 0.toULong)
       val ptr  = summon[Allocator[Byte]].alloc(size)
       stdio.fseek(file, 0.toLong, stdio.SEEK_SET)
       stdio.fread(ptr, sizeof[Byte], size, file)
