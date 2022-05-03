@@ -58,6 +58,7 @@ object Span {
   }
 }
 
+given [T: Tag]: Conversion[Span[T], SpanOps[T]] = new SpanOps[T](_)
 final case class SpanOps[T: Tag](sp: Span[T]) {
   @tailrec
   final def loop(b: Ptr[T], f: T => CBool): Option[Ptr[T]] = {
@@ -148,5 +149,3 @@ final case class SpanOps[T: Tag](sp: Span[T]) {
   }
   def fold[T1](t: T1, f: (T, T1) => T1): T1 = loop3(0.toULong, t, f)
 }
-
-given [T: Tag]: Conversion[Span[T], SpanOps[T]] = new SpanOps[T](_)
