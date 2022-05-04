@@ -10,7 +10,7 @@ import scala.scalanative.libc.*
 class CListTest {
   @Test def create(): Unit = Zone { implicit z =>
     // implicit def allocator[T]: Ptr[CList[T]] = alloc[CList[T]]()
-    val l = CList(0, 1, 2, 3, 4)
+    val l = CList.make(CList(0, 1), CList(2, 3, 4))
     val (max, min, total, num) = l.fold(
       (Int.MinValue, Int.MaxValue, 0, 0),
       (b, ms) => {

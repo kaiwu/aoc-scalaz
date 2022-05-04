@@ -24,7 +24,18 @@ object Span {
     span
   }
   def make[T: Tag](p1: Ptr[T], p2: Ptr[T]): Span[T] = make(p1, (p2 - p1).asInstanceOf[CSize])
-  def make(p: CString): Span[CChar]                 = make(p, string.strlen(p))
+  def make[T: Tag](p1: Span[T], p2: Span[T]): Span[T] = (p1, p2) match {
+    case (x, _) if x.isEmpty => p2
+    case (_, x) if x.isEmpty => p1
+    case (x, y) =>
+      val size         = p1.length + p2.length
+      val p            = summon[Allocator[T]].alloc(size)
+      var index: CSize = 0.toULong
+      x.foreach(t => { p(index) = t; index += 1.toULong })
+      y.foreach(t => { p(index) = t; index += 1.toULong })
+      make(p, size)
+  }
+  def make(p: CString): Span[CChar] = make(p, string.strlen(p))
   def apply[T: Tag](p: Ptr[T], s: CSize)(using span: Span[T]): Span[T] = {
     span._1 = p
     span._2 = s
@@ -55,6 +66,10 @@ object Span {
 
   given span_functor_evidence: Functor[Span] with {
     override def map[A, B](fa: Span[A])(f: A => B): Span[B] = fa.map(f)
+  }
+  given [T: Tag]: Monoid[Span[T]] with {
+    override def zero: Span[T]                                = Span.make(null, 0.toULong)
+    override def append(f1: Span[T], f2: => Span[T]): Span[T] = Span.make(f1, f2)
   }
 }
 

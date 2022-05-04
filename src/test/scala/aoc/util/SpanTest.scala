@@ -13,7 +13,7 @@ class SpanTest {
     implicit def allocator[T]: Span[T] = alloc[Span[T]]()
     val s1                             = Span(c"abc")
     val s2                             = Span(c"hello")
-    val s3                             = Span(c"abchello").drop(3.toULong)
+    val s3                             = Span.make(s1, s2).drop(3.toULong)
 
     assertEquals(s1(0), 'a')
     assertEquals(s1.length, 3.toULong)

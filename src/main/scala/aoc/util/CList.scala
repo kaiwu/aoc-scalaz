@@ -35,9 +35,21 @@ object CList {
     ls.toSeq.foreach(x => make(x)(summon[Tag[T]], n))
     n
   }
-
+  def make[T: Tag](l1: CList[T], l2: CList[T]): CList[T] = (l1, l2) match {
+    case (x, _) if !x.valid || x.empty => l2
+    case (_, x) if !x.valid || x.empty => l1
+    case (x, y) =>
+      val h = head[T]
+      x.foreach(t => make(t)(summon[Tag[T]], h))
+      y.foreach(t => make(t)(summon[Tag[T]], h))
+      h
+  }
   given clist_functor_instance: Functor[CList] with {
     override def map[A, B](fa: CList[A])(f: A => B): CList[B] = fa.map(f)
+  }
+  given [T: Tag]: Monoid[CList[T]] with {
+    override def zero: CList[T]                                  = head[T]
+    override def append(f1: CList[T], f2: => CList[T]): CList[T] = CList.make(f1, f2)
   }
 }
 
@@ -134,9 +146,9 @@ final case class CListOps[T: Tag](h: CList[T]) {
   def map[T1: Tag](f: T => T1): CList[T1] = {
     import CList.head
     import CList.make
-    val head = summon[CList[T1]]
-    foreach(x => make(f(x))(summon[Tag[T1]], head))
-    head
+    val h = summon[CList[T1]]
+    foreach(x => make(f(x))(summon[Tag[T1]], h))
+    h
   }
   def fold[T1](t1: T1, f: (T, T1) => T1): T1 = loop(h, t1, f)
 }
