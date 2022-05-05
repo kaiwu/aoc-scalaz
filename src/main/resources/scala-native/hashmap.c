@@ -461,7 +461,7 @@ bool hashmap_iter(struct hashmap *map, size_t *i, void **item)
 //
 // default: SipHash-2-4
 //-----------------------------------------------------------------------------
-static uint64_t SIP64(const uint8_t *in, const size_t inlen, 
+static uint64_t SIP64(const uint8_t *in, const size_t inlen,
                       uint64_t seed0, uint64_t seed1) 
 {
 #define U8TO64_LE(p) \
