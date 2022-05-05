@@ -23,46 +23,24 @@ type hash_t     = CFuncPtr3[Ptr[Byte], CUnsignedLongLong, CUnsignedLongLong, CUn
 type compare_t  = CFuncPtr3[Ptr[Byte], Ptr[Byte], Ptr[Byte], CInt]
 type void_t     = Ptr[Byte]
 type iter_t     = CFuncPtr2[void_t, void_t, CBool]
-type hashmap = CStruct21[
-  malloc_t,
-  remalloc_t,
-  free_t,
-  CBool,
-  CSize,
-  CSize,
-  CUnsignedLongLong,
-  CUnsignedLongLong,
-  hash_t,
-  compare_t,
-  free_t,
-  void_t,
-  CSize,
-  CSize,
-  CSize,
-  CSize,
-  CSize,
-  CSize,
-  void_t,
-  void_t,
-  void_t
-]
+type hashmap    = Ptr[Byte]
 
 @extern
 object hashmap {
-  def hashmap_new(s: CSize, c: CSize, s0: CSize, s1: CSize, h: hash_t, co: compare_t, f: free_t, u: void_t): Ptr[hashmap] = extern
-  def hashmap_free(p: Ptr[hashmap]): Unit                                                                                 = extern
-  def hashmap_clear(p: Ptr[hashmap], b: CBool): Unit                                                                      = extern
-  def hashmap_count(p: Ptr[hashmap]): CSize                                                                               = extern
-  def hashmap_get(p: Ptr[hashmap], item: void_t): void_t                                                                  = extern
-  def hashmap_set(p: Ptr[hashmap], item: void_t): void_t                                                                  = extern
-  def hashmap_delete(p: Ptr[hashmap], item: void_t): void_t                                                               = extern
-  def hashmap_scan(p: Ptr[hashmap], iter: iter_t, u: void_t): CBool                                                       = extern
-  def hashmap_iter(p: Ptr[hashmap], i: Ptr[CSize], iterm: Ptr[Ptr[Byte]]): CBool                                          = extern
-  def hashmap_sip(d: void_t, l: CSize, s0: CUnsignedLongLong, s1: CUnsignedLongLong): CUnsignedLongLong                   = extern
-  def hashmap_murmur(d: void_t, l: CSize, s0: CUnsignedLongLong, s1: CUnsignedLongLong): CUnsignedLongLong                = extern
+  def hashmap_new(s: CSize, c: CSize, s0: CSize, s1: CSize, h: hash_t, co: compare_t, f: free_t, u: void_t): hashmap = extern
+  def hashmap_free(p: hashmap): Unit                                                                                 = extern
+  def hashmap_clear(p: hashmap, b: CBool): Unit                                                                      = extern
+  def hashmap_count(p: hashmap): CSize                                                                               = extern
+  def hashmap_get(p: hashmap, item: void_t): void_t                                                                  = extern
+  def hashmap_set(p: hashmap, item: void_t): void_t                                                                  = extern
+  def hashmap_delete(p: hashmap, item: void_t): void_t                                                               = extern
+  def hashmap_scan(p: hashmap, iter: iter_t, u: void_t): CBool                                                       = extern
+  def hashmap_iter(p: hashmap, i: Ptr[CSize], iterm: Ptr[Ptr[Byte]]): CBool                                          = extern
+  def hashmap_sip(d: void_t, l: CSize, s0: CUnsignedLongLong, s1: CUnsignedLongLong): CUnsignedLongLong              = extern
+  def hashmap_murmur(d: void_t, l: CSize, s0: CUnsignedLongLong, s1: CUnsignedLongLong): CUnsignedLongLong           = extern
 }
 
-final case class CHashMap[K: Order: Tag, V: Tag](map: Ptr[hashmap])
+final case class CHashMap[K: Order: Tag, V: Tag](map: hashmap)
 object CHashMap {
   def apply[K: Order: Tag, V: Tag](): CHashMap[K, V] = {
     val compare: compare_t = (a: void_t, b: void_t, c: void_t) => {
@@ -77,12 +55,12 @@ object CHashMap {
     }
 
     val ksize                    = summon[Tag[K]].size
-    val vsize                    = summon[Tag[V]].size
+    val kvsize                   = summon[Tag[CStruct2[K, V]]].size
     val cap: CSize               = 1024.toULong
     val seed0: CUnsignedLongLong = 0.toULong
     val seed1: CUnsignedLongLong = 1.toULong
     val hash: hash_t             = hashmap.hashmap_sip(_, ksize, _, _)
-    val m                        = hashmap.hashmap_new(ksize + vsize, cap, seed0, seed1, hash, compare, null, null)
+    val m                        = hashmap.hashmap_new(kvsize, cap, seed0, seed1, hash, compare, null, null)
     CHashMap(m)
   }
 }
