@@ -22,12 +22,17 @@ class packageTest {
 
   @Test def struct(): Unit = {
     type S = CStruct2[CInt, CInt]
-
-    def method(s: S): S = { s._2 = s._2 + 1; s }
-    val x               = stackalloc[S]()
+    val x: S = stackalloc[S]()
     x._1 = 10
     x._2 = 20
+
+    def method(s: S): S = {
+      assertEquals(x.at1, s.at1)
+      s._2 = s._2 + 1
+      s
+    }
     val r = method(x)
+    assertEquals(x.at1, r.at1)
 
     assertEquals(r._1, 10)
     assertEquals(r._2, 21)
