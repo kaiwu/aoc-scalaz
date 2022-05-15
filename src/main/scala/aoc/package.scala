@@ -10,10 +10,31 @@ import scala.scalanative.unsafe._
 import scala.scalanative.unsigned._
 
 package object aoc {
+  trait PtrOps[T: Tag] {
+    def self: Ptr[T]
+    def some: Option[Ptr[T]] = self match {
+      case null => None
+      case _    => Some(self)
+    }
+  }
+
+  given [T: Tag]: Conversion[Ptr[T], PtrOps[T]] with {
+    def apply(p: Ptr[T]): PtrOps[T] = new PtrOps[T] {
+      def self = p
+    }
+  }
+
   @tailrec
   def fold[T: Tag, A](p: Ptr[T], a: A, f: (A, Ptr[T]) => A, g: Ptr[T] => CBool): (A, Ptr[T]) =
     if (g(p)) fold(p + 1, f(a, p), f, g)
     else (a, p)
+
+  @tailrec
+  def iterate[T: Tag](p1: Ptr[T], p2: Ptr[T], f: Ptr[T] => CBool): Ptr[T] = p1 match {
+    case x if x == p2 => null
+    case x if f(x)    => x
+    case _            => iterate(p1 + 1, p2, f)
+  }
 
   def get_number(pptr: PPtr[CChar], p: Ptr[CInt]): Unit = {
     !p = 0
