@@ -45,7 +45,7 @@ package object aoc {
     !pptr = t._2
   }
 
-  def foreach_line[U](file: Span[Byte], f: Span[Byte] => U, c: CChar = '\n'): Unit = Zone { implicit z =>
+  def foreach_line[U](file: Span[Byte], c: CChar = '\n')(f: Span[Byte] => U): Unit = Zone { implicit z =>
     implicit def allocator[T]: Span[T] = alloc[Span[T]]()
     val end                            = file._1 + file._2
     @tailrec
